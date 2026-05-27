@@ -439,6 +439,26 @@ def admin_faq_delete():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/admin/test-email")
+@admin_required
+def admin_test_email():
+    result = {
+        "smtp_host": SMTP_HOST,
+        "smtp_port": SMTP_PORT,
+        "email_user": SMTP_USER,
+        "email_user_set": bool(SMTP_USER),
+        "email_pass_set": bool(SMTP_PASS),
+        "admin_email": ADMIN_EMAIL,
+    }
+    ok = send_email(
+        ADMIN_EMAIL or SMTP_USER,
+        "[이랜드건설 HR FAQ] 이메일 테스트",
+        "이메일 발송 테스트입니다. 이 메일이 도착했다면 설정이 정상입니다.",
+    )
+    result["send_ok"] = ok
+    return jsonify(result)
+
+
 @app.route("/admin/delete_question", methods=["POST"])
 @admin_required
 def admin_delete_question():
