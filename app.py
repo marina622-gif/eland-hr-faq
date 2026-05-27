@@ -158,6 +158,28 @@ def send_email(to: str, subject: str, body: str) -> bool:
         return False
 
 
+_last_mail_error = ""
+
+
+def send_email_debug(to: str, subject: str, body: str):
+    global _last_mail_error
+    if not RESEND_API_KEY or not to:
+        _last_mail_error = "API 키 또는 수신자 없음"
+        return False
+    try:
+        resend.Emails.send({
+            "from": "이랜드건설 HR <onboarding@resend.dev>",
+            "to": [to],
+            "subject": subject,
+            "text": body,
+        })
+        _last_mail_error = ""
+        return True
+    except Exception as e:
+        _last_mail_error = f"{type(e).__name__}: {e}"
+        return False
+
+
 # ── Flask 앱 ──────────────────────────────────────────────────
 app = Flask(__name__)
 app.secret_key = os.getenv("ADMIN_SECRET", "eland-hr-admin-2025")
@@ -436,12 +458,13 @@ def admin_test_email():
         "resend_key_set": bool(RESEND_API_KEY),
         "admin_email": ADMIN_EMAIL,
     }
-    ok = send_email(
-        ADMIN_EMAIL or SMTP_USER,
+    ok = send_email_debug(
+        ADMIN_EMAIL,
         "[이랜드건설 HR FAQ] 이메일 테스트",
         "이메일 발송 테스트입니다. 이 메일이 도착했다면 설정이 정상입니다.",
     )
     result["send_ok"] = ok
+    result["error"] = _last_mail_error
     return jsonify(result)
 
 
