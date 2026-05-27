@@ -3,7 +3,7 @@ services:
     name: eland-hr-faq
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python ingest.py && gunicorn app:app --workers=1 --timeout=120
+    startCommand: gunicorn app:app --workers=1 --timeout=120
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false
