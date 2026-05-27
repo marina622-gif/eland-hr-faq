@@ -144,7 +144,9 @@ with get_db() as _c:
 
 # ── 이메일 ────────────────────────────────────────────────────
 def send_email(to: str, subject: str, body: str) -> bool:
+    print(f"[MAIL] 시도: to={to}, user={SMTP_USER!r}, pass_set={bool(SMTP_PASS)}, host={SMTP_HOST}:{SMTP_PORT}")
     if not all([SMTP_USER, SMTP_PASS, to]):
+        print(f"[MAIL] 환경변수 누락 — 발송 스킵")
         return False
     try:
         msg = MIMEMultipart()
@@ -152,14 +154,16 @@ def send_email(to: str, subject: str, body: str) -> bool:
         msg["To"]   = to
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "plain", "utf-8"))
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as s:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+            s.ehlo()
             s.starttls()
+            s.ehlo()
             s.login(SMTP_USER, SMTP_PASS)
             s.send_message(msg)
-        print(f"[MAIL] → {to}")
+        print(f"[MAIL] 성공 → {to}")
         return True
     except Exception as e:
-        print(f"[MAIL] 실패: {e}")
+        print(f"[MAIL] 실패 ({type(e).__name__}): {e}")
         return False
 
 
