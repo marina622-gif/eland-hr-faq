@@ -8,10 +8,11 @@
 
 import os
 import sqlite3
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from functools import wraps
 from pathlib import Path
-
-import resend
 
 import anthropic
 import openpyxl
@@ -33,9 +34,11 @@ CAT_ORDER = ["연차/휴가", "급여/계약", "경조사", "보험/복리후생
 ANTHROPIC_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL   = "claude-haiku-4-5-20251001"
 
-ADMIN_EMAIL    = os.getenv("ADMIN_EMAIL", "")
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-resend.api_key = RESEND_API_KEY
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
+SMTP_HOST   = os.getenv("SMTP_HOST", "smtp.naver.com")
+SMTP_PORT   = int(os.getenv("SMTP_PORT", "465"))
+SMTP_USER   = os.getenv("EMAIL_USER", "")
+SMTP_PASS   = os.getenv("EMAIL_PASSWORD", "")
 
 SYSTEM_PROMPT = """\
 당신은 이랜드건설의 HR(인사) FAQ 챗봇입니다.
@@ -140,44 +143,41 @@ with get_db() as _c:
 
 
 # ── 이메일 ────────────────────────────────────────────────────
-def send_email(to: str, subject: str, body: str) -> bool:
-    if not RESEND_API_KEY or not to:
-        print(f"[MAIL] API 키 또는 수신자 없음")
-        return False
-    try:
-        resend.Emails.send({
-            "from": "이랜드건설 HR <onboarding@resend.dev>",
-            "to": [to],
-            "subject": subject,
-            "text": body,
-        })
-        print(f"[MAIL] 성공 → {to}")
-        return True
-    except Exception as e:
-        print(f"[MAIL] 실패 ({type(e).__name__}): {e}")
-        return False
-
-
 _last_mail_error = ""
 
 
-def send_email_debug(to: str, subject: str, body: str):
+def send_email(to: str, subject: str, body: str) -> bool:
     global _last_mail_error
-    if not RESEND_API_KEY or not to:
-        _last_mail_error = "API 키 또는 수신자 없음"
+    if not all([SMTP_USER, SMTP_PASS, to]):
+        _last_mail_error = "환경변수 누락"
+        print(f"[MAIL] 환경변수 누락")
         return False
     try:
-        resend.Emails.send({
-            "from": "이랜드건설 HR <onboarding@resend.dev>",
-            "to": [to],
-            "subject": subject,
-            "text": body,
-        })
+        msg = MIMEMultipart()
+        msg["From"]    = SMTP_USER
+        msg["To"]      = to
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "plain", "utf-8"))
+        if SMTP_PORT == 465:
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+                s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
+        else:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+                s.starttls()
+                s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
         _last_mail_error = ""
+        print(f"[MAIL] 성공 → {to}")
         return True
     except Exception as e:
         _last_mail_error = f"{type(e).__name__}: {e}"
+        print(f"[MAIL] 실패: {e}")
         return False
+
+
+def send_email_debug(to: str, subject: str, body: str) -> bool:
+    return send_email(to, subject, body)
 
 
 # ── Flask 앱 ──────────────────────────────────────────────────
@@ -455,7 +455,10 @@ def admin_faq_delete():
 @app.route("/admin/test-email")
 def admin_test_email():
     result = {
-        "resend_key_set": bool(RESEND_API_KEY),
+        "smtp_host": SMTP_HOST,
+        "smtp_port": SMTP_PORT,
+        "email_user_set": bool(SMTP_USER),
+        "email_pass_set": bool(SMTP_PASS),
         "admin_email": ADMIN_EMAIL,
     }
     ok = send_email_debug(
