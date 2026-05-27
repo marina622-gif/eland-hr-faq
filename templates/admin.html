@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>이랜드건설 HR FAQ 관리자</title>
+  <style>
+    :root {
+      --red:     #CC0000;
+      --red-h:   #e60000;
+      --red-dim: rgba(204,0,0,0.12);
+      --bg:      #0c0f14;
+      --bg2:     #141920;
+      --bg3:     #1a2030;
+      --bg4:     #1f2638;
+      --text:    #e8edf4;
+      --text-m:  #7e8a9a;
+      --border:  rgba(255,255,255,0.07);
+      --border-r:rgba(204,0,0,0.28);
+      --green:   #3fb950;
+      --yellow:  #e3b341;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI','Malgun Gothic',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* ── 로그인 ── */
+    #loginOverlay {
+      position:fixed; inset:0; z-index:300;
+      background:var(--bg);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .login-card {
+      background:var(--bg3); border:1px solid var(--border-r);
+      border-radius:20px; padding:44px 40px; width:min(400px,92vw);
+      animation:fadeUp .35s ease;
+    }
+    .login-logo { display:flex; align-items:center; gap:14px; margin-bottom:32px; }
+    .e-mark {
+      width:44px; height:44px; background:var(--red); border-radius:9px;
+      display:flex; align-items:center; justify-content:center;
+      font:900 22px/1 'Arial Black',sans-serif; color:#fff;
+      box-shadow:0 0 18px rgba(204,0,0,.4); flex-shrink:0;
+    }
+    .brand-name { font-size:18px; font-weight:700; }
+    .brand-sub  { font-size:10px; color:var(--red); letter-spacing:2.5px; text-transform:uppercase; margin-top:3px; }
+    .login-title { font-size:15px; font-weight:600; margin-bottom:20px; color:var(--text-m); }
+    .login-input {
+      width:100%; background:var(--bg4); border:1px solid var(--border);
+      border-radius:10px; color:var(--text); font-size:14px; font-family:inherit;
+      padding:12px 16px; outline:none; transition:border-color .2s; margin-bottom:12px;
+    }
+    .login-input:focus { border-color:var(--red); box-shadow:0 0 0 3px var(--red-dim); }
+    .login-err { font-size:13px; color:#ff6b6b; min-height:20px; margin-bottom:8px; }
+    .btn-login {
+      width:100%; background:var(--red); border:none; border-radius:10px;
+      color:#fff; font-size:14px; font-weight:600; padding:13px;
+      cursor:pointer; font-family:inherit; transition:background .2s;
+    }
+    .btn-login:hover { background:var(--red-h); }
+
+    /* ── 헤더 ── */
+    header {
+      background:linear-gradient(135deg,#0c0f14,#141920);
+      border-bottom:1px solid var(--border);
+      box-shadow:0 1px 0 var(--border-r),0 4px 24px rgba(0,0,0,.5);
+      padding:0 28px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:relative; flex-shrink:0;
+    }
+    header::after {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:linear-gradient(90deg,var(--red),rgba(204,0,0,.4),transparent);
+    }
+    .logo-area { display:flex; align-items:center; gap:14px; }
+    .header-right { display:flex; align-items:center; gap:10px; }
+    .stat-badge {
+      font-size:12px; background:var(--bg3); border:1px solid var(--border);
+      border-radius:20px; padding:5px 14px; color:var(--text-m);
+    }
+    .stat-badge strong { color:var(--red); }
+    .btn-sm {
+      font-size:13px; background:transparent; border:1px solid var(--border);
+      border-radius:8px; color:var(--text-m); padding:7px 14px; cursor:pointer;
+      font-family:inherit; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center;
+    }
+    .btn-sm:hover { border-color:var(--red); color:var(--text); }
+    .btn-red {
+      font-size:13px; background:var(--red); border:none; border-radius:8px;
+      color:#fff; padding:7px 16px; cursor:pointer; font-family:inherit;
+      text-decoration:none; transition:background .2s;
+    }
+    .btn-red:hover { background:var(--red-h); }
+
+    /* ── 탭 바 ── */
+    .tab-bar {
+      background:var(--bg2); border-bottom:1px solid var(--border);
+      padding:0 28px; display:flex; gap:4px; align-items:center; height:52px;
+    }
+    .tab {
+      position:relative; padding:8px 20px; border-radius:8px 8px 0 0;
+      border:1px solid transparent; border-bottom:none;
+      background:transparent; color:var(--text-m); cursor:pointer;
+      font-size:13px; font-family:inherit; font-weight:500;
+      transition:all .2s; display:flex; align-items:center; gap:8px;
+    }
+    .tab.active {
+      background:var(--bg3); border-color:var(--border);
+      color:var(--text); border-bottom-color:var(--bg3);
+    }
+    .tab:hover:not(.active) { color:var(--text); }
+    .tab-badge {
+      font-size:11px; background:var(--red); color:#fff;
+      border-radius:10px; padding:1px 7px; font-weight:600; min-width:20px; text-align:center;
+    }
+
+    /* ── 컨텐츠 ── */
+    .container { max-width:1100px; margin:0 auto; padding:28px 20px 40px; }
+
+    /* 카드 */
+    .q-card {
+      background:var(--bg3); border:1px solid var(--border);
+      border-radius:14px; padding:20px 22px; margin-bottom:14px;
+    }
+    .q-card.answered { border-left:3px solid var(--green); opacity:.8; }
+    .q-meta { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+    .q-id { font-size:11px; color:var(--text-m); background:var(--bg4); padding:2px 8px; border-radius:6px; }
+    .q-date { font-size:11px; color:var(--text-m); }
+    .badge-pending  { font-size:11px; padding:3px 10px; background:rgba(227,179,65,.15); border:1px solid rgba(227,179,65,.4); border-radius:20px; color:var(--yellow); }
+    .badge-answered { font-size:11px; padding:3px 10px; background:rgba(63,185,80,.15); border:1px solid rgba(63,185,80,.4); border-radius:20px; color:var(--green); }
+    .q-user { font-size:12px; color:var(--text-m); margin-bottom:10px; }
+    .q-user strong { color:var(--text); }
+    .q-text { font-size:15px; font-weight:600; line-height:1.5; margin-bottom:12px; }
+    .answered-text {
+      font-size:13px; color:var(--text-m); background:var(--bg4);
+      border-radius:8px; padding:12px 14px; line-height:1.6; white-space:pre-wrap;
+    }
+
+    /* 답변 폼 */
+    .answer-form { margin-top:14px; }
+    .answer-form label { font-size:12px; color:var(--text-m); display:block; margin-bottom:6px; }
+    .cat-select {
+      background:var(--bg4); border:1px solid var(--border); border-radius:8px;
+      color:var(--text); font-size:13px; padding:8px 12px; outline:none;
+      font-family:inherit; margin-bottom:10px; transition:border-color .2s; cursor:pointer;
+    }
+    .cat-select:focus { border-color:var(--red); }
+    .answer-form textarea, .add-textarea {
+      width:100%; background:var(--bg4); border:1px solid var(--border);
+      border-radius:10px; color:var(--text); font-size:14px; font-family:inherit;
+      padding:12px 14px; resize:vertical; outline:none; line-height:1.6;
+      min-height:90px; transition:border-color .2s;
+    }
+    .answer-form textarea:focus, .add-textarea:focus { border-color:var(--red); }
+    .answer-form textarea::placeholder, .add-textarea::placeholder { color:var(--text-m); }
+
+    /* 버튼들 */
+    .btn-submit {
+      margin-top:10px; background:var(--red); border:none; border-radius:8px;
+      color:#fff; font-size:13px; font-weight:600; padding:10px 20px;
+      cursor:pointer; font-family:inherit; transition:background .2s;
+    }
+    .btn-submit:hover { background:var(--red-h); }
+    .btn-submit:disabled { background:#333; cursor:not-allowed; }
+    .btn-del-q {
+      margin-left:auto; font-size:11px; background:transparent;
+      border:1px solid rgba(204,0,0,.3); border-radius:6px;
+      color:#ff6b6b; padding:3px 10px; cursor:pointer; font-family:inherit;
+      transition:all .2s;
+    }
+    .btn-del-q:hover { background:rgba(204,0,0,.15); border-color:var(--red); }
+
+    /* FAQ 테이블 */
+    .faq-table {
+      width:100%; border-collapse:collapse; font-size:13px;
+      background:var(--bg3); border-radius:12px; overflow:hidden;
+    }
+    .faq-table th {
+      background:var(--bg4); color:var(--text-m); font-weight:600;
+      padding:12px 14px; text-align:left; border-bottom:1px solid var(--border);
+      white-space:nowrap;
+    }
+    .faq-table td {
+      padding:12px 14px; border-bottom:1px solid var(--border);
+      vertical-align:top; line-height:1.5;
+    }
+    .faq-table tr:last-child td { border-bottom:none; }
+    .faq-table tr:hover td { background:var(--bg4); }
+    .tc { text-align:center; }
+    .cat-chip {
+      font-size:11px; background:var(--red-dim); border:1px solid var(--border-r);
+      border-radius:12px; padding:3px 10px; color:#ff7070; white-space:nowrap;
+    }
+    .q-cell { max-width:220px; word-break:keep-all; }
+    .a-cell { max-width:300px; color:var(--text-m); word-break:keep-all; }
+    .btn-edit {
+      font-size:11px; background:var(--bg4); border:1px solid var(--border);
+      border-radius:6px; color:var(--text-m); padding:4px 10px; cursor:pointer;
+      font-family:inherit; transition:all .2s; margin-right:4px;
+    }
+    .btn-edit:hover { border-color:var(--text-m); color:var(--text); }
+    .btn-del {
+      font-size:11px; background:transparent; border:1px solid rgba(204,0,0,.3);
+      border-radius:6px; color:#ff6b6b; padding:4px 10px; cursor:pointer;
+      font-family:inherit; transition:all .2s;
+    }
+    .btn-del:hover { background:rgba(204,0,0,.15); border-color:var(--red); }
+
+    /* 새 FAQ 추가 폼 */
+    .add-faq-section {
+      margin-top:28px; background:var(--bg3); border:1px solid var(--border);
+      border-radius:14px; padding:24px;
+    }
+    .section-title {
+      font-size:14px; font-weight:600; margin-bottom:16px;
+      display:flex; align-items:center; gap:8px; color:var(--text);
+    }
+    .add-input {
+      width:100%; background:var(--bg4); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:14px; font-family:inherit;
+      padding:10px 14px; outline:none; transition:border-color .2s; margin-bottom:10px;
+    }
+    .add-input:focus { border-color:var(--red); }
+    .add-input::placeholder { color:var(--text-m); }
+    .btn-add {
+      background:var(--red); border:none; border-radius:8px;
+      color:#fff; font-size:13px; font-weight:600; padding:10px 24px;
+      cursor:pointer; font-family:inherit; transition:background .2s;
+    }
+    .btn-add:hover { background:var(--red-h); }
+
+    /* 수정 모달 */
+    #editModal {
+      position:fixed; inset:0; z-index:200;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .modal-overlay {
+      position:absolute; inset:0; background:rgba(0,0,0,.7);
+    }
+    .edit-card {
+      position:relative; background:var(--bg3); border:1px solid var(--border-r);
+      border-radius:18px; padding:32px; width:min(560px,94vw);
+      animation:fadeUp .25s ease; z-index:1;
+    }
+    .edit-title { font-size:16px; font-weight:700; margin-bottom:20px; }
+    .edit-field { margin-bottom:14px; }
+    .edit-field label { font-size:12px; color:var(--text-m); display:block; margin-bottom:6px; }
+    .edit-actions { display:flex; gap:10px; margin-top:20px; }
+    .btn-save {
+      flex:1; background:var(--red); border:none; border-radius:8px;
+      color:#fff; font-size:14px; font-weight:600; padding:11px;
+      cursor:pointer; font-family:inherit; transition:background .2s;
+    }
+    .btn-save:hover { background:var(--red-h); }
+    .btn-cancel {
+      background:transparent; border:1px solid var(--border); border-radius:8px;
+      color:var(--text-m); font-size:13px; padding:11px 20px;
+      cursor:pointer; font-family:inherit; transition:all .2s;
+    }
+    .btn-cancel:hover { border-color:var(--text-m); color:var(--text); }
+
+    /* 공통 */
+    .empty { text-align:center; padding:60px 20px; color:var(--text-m); }
+    .empty-icon { font-size:40px; margin-bottom:12px; }
+    .loading { text-align:center; padding:40px; color:var(--text-m); }
+    #toast {
+      position:fixed; bottom:24px; right:24px; z-index:999;
+      background:var(--bg3); border:1px solid var(--border);
+      border-radius:10px; padding:14px 20px; font-size:13px;
+      box-shadow:0 4px 20px rgba(0,0,0,.5); display:none;
+    }
+    #toast.ok  { border-color:rgba(63,185,80,.5);  color:var(--green); }
+    #toast.err { border-color:rgba(204,0,0,.5);    color:#ff6b6b; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+
+<!-- ── 로그인 오버레이 ── -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="e-mark">E</div>
+      <div>
+        <div class="brand-name">이랜드건설</div>
+        <div class="brand-sub">HR FAQ Admin</div>
+      </div>
+    </div>
+    <div class="login-title">관리자 로그인</div>
+    <input type="password" id="adminPw" class="login-input" placeholder="비밀번호를 입력하세요"/>
+    <div id="loginErr" class="login-err"></div>
+    <button class="btn-login" onclick="doLogin()">로그인</button>
+  </div>
+</div>
+
+<!-- ── 메인 (로그인 후 표시) ── -->
+<div id="adminMain" style="display:none; min-height:100vh; flex-direction:column;">
+
+  <header>
+    <div class="logo-area">
+      <div class="e-mark">E</div>
+      <div>
+        <div class="brand-name">이랜드건설</div>
+        <div class="brand-sub">HR FAQ 관리자</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="stat-badge">FAQ <strong id="hFaqCount">-</strong>개 &nbsp;|&nbsp; 미답변 <strong id="hPendingCount">-</strong>건</div>
+      <a href="/" class="btn-red">챗봇 보기</a>
+      <button class="btn-sm" onclick="doLogout()">로그아웃</button>
+    </div>
+  </header>
+
+  <div class="tab-bar">
+    <button class="tab active" id="tabBtnPending" onclick="switchTab('pending',this)">
+      ⏳ 미답변 질문
+      <span class="tab-badge" id="pendingBadge" style="display:none"></span>
+    </button>
+    <button class="tab" id="tabBtnFaq" onclick="switchTab('faq',this)">
+      📋 FAQ 관리
+    </button>
+    <button class="tab" id="tabBtnAnswered" onclick="switchTab('answered',this)">
+      ✅ 답변 완료
+    </button>
+  </div>
+
+  <div class="container">
+
+    <!-- 미답변 질문 탭 -->
+    <div id="tabPending">
+      <div id="pendingList"><div class="loading">불러오는 중...</div></div>
+    </div>
+
+    <!-- FAQ 관리 탭 -->
+    <div id="tabFaq" style="display:none">
+      <div id="faqTableWrap"><div class="loading">불러오는 중...</div></div>
+      <div class="add-faq-section">
+        <div class="section-title">+ 새 FAQ 추가</div>
+        <select id="newCat" class="cat-select" style="margin-bottom:10px;">
+          <option>연차/휴가</option><option>급여/계약</option><option>경조사</option>
+          <option>보험/복리후생</option><option>서류/증명</option><option>근무</option><option>기타</option>
+        </select>
+        <input type="text" id="newQ" class="add-input" placeholder="질문을 입력하세요"/>
+        <textarea id="newA" class="add-textarea" placeholder="답변을 입력하세요..." style="margin-bottom:12px;"></textarea>
+        <button class="btn-add" onclick="addFaq()">FAQ 추가</button>
+      </div>
+    </div>
+
+    <!-- 답변 완료 탭 -->
+    <div id="tabAnswered" style="display:none">
+      <div id="answeredList"><div class="loading">불러오는 중...</div></div>
+    </div>
+
+  </div>
+</div><!-- /#adminMain -->
+
+<!-- ── 수정 모달 ── -->
+<div id="editModal" style="display:none">
+  <div class="modal-overlay" onclick="closeEditModal()"></div>
+  <div class="edit-card">
+    <div class="edit-title">FAQ 수정</div>
+    <input type="hidden" id="editIdx"/>
+    <div class="edit-field">
+      <label>카테고리</label>
+      <select id="editCat" class="cat-select" style="width:100%">
+        <option>연차/휴가</option><option>급여/계약</option><option>경조사</option>
+        <option>보험/복리후생</option><option>서류/증명</option><option>근무</option><option>기타</option>
+      </select>
+    </div>
+    <div class="edit-field">
+      <label>질문</label>
+      <input type="text" id="editQ" class="add-input" style="margin-bottom:0"/>
+    </div>
+    <div class="edit-field">
+      <label>답변</label>
+      <textarea id="editA" class="add-textarea" rows="5" style="min-height:120px;margin-bottom:0"></textarea>
+    </div>
+    <div class="edit-actions">
+      <button class="btn-save" onclick="saveFaqEdit()">저장</button>
+      <button class="btn-cancel" onclick="closeEditModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ── 인증 ──────────────────────────────────────────────────
+  async function checkAuth() {
+    const d = await fetch('/admin/check-auth').then(r => r.json()).catch(() => ({}));
+    d.authenticated ? showMain() : showLogin();
+  }
+
+  function showLogin() {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('adminMain').style.display   = 'none';
+    setTimeout(() => document.getElementById('adminPw').focus(), 100);
+  }
+
+  function showMain() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('adminMain').style.display    = 'flex';
+    loadAll();
+  }
+
+  async function doLogin() {
+    const pw  = document.getElementById('adminPw').value;
+    const err = document.getElementById('loginErr');
+    err.textContent = '';
+    const res = await fetch('/admin/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({password: pw}),
+    }).catch(() => null);
+    if (res && res.ok) { showMain(); }
+    else { err.textContent = '비밀번호가 틀렸습니다.'; }
+  }
+
+  async function doLogout() {
+    await fetch('/admin/logout', {method:'POST'}).catch(() => {});
+    document.getElementById('adminPw').value = '';
+    document.getElementById('loginErr').textContent = '';
+    showLogin();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    document.getElementById('adminPw').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeEditModal();
+    });
+  });
+
+  // 401 → AUTH 에러 throw (showLogin 직접 호출 안 함)
+  async function apiFetch(url, opts={}) {
+    const res = await fetch(url, opts);
+    if (res.status === 401) { throw new Error('AUTH'); }
+    return res;
+  }
+
+  // ── 탭 전환 ───────────────────────────────────────────────
+  let currentTab = 'pending';
+
+  function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    ['Pending','Faq','Answered'].forEach(t =>
+      document.getElementById('tab'+t).style.display = 'none'
+    );
+    document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display = 'block';
+    if (tab === 'faq')      loadFaq();
+    if (tab === 'answered') loadAnswered();
+  }
+
+  // ── 통계 ──────────────────────────────────────────────────
+  async function loadStats() {
+    const res = await apiFetch('/admin/stats');
+    const s   = await res.json().catch(() => ({}));
+    document.getElementById('hFaqCount').textContent     = s.faq_count ?? '-';
+    document.getElementById('hPendingCount').textContent = s.pending   ?? '-';
+    const pb = document.getElementById('pendingBadge');
+    if (s.pending > 0) { pb.textContent = s.pending; pb.style.display = 'inline'; }
+    else               { pb.style.display = 'none'; }
+  }
+
+  // AUTH 에러만 showLogin, 나머지는 무시
+  async function loadAll() {
+    try {
+      await loadStats();
+      await loadPending();
+    } catch(e) {
+      if (e.message === 'AUTH') showLogin();
+    }
+  }
+
+  // ── 미답변 질문 ───────────────────────────────────────────
+  let allQuestions = [];
+
+  async function loadPending() {
+    try {
+      allQuestions = await apiFetch('/admin/questions').then(r => r.json());
+      console.log('[Admin] 질문 로드:', allQuestions.length, '건, pending:', allQuestions.filter(q=>q.status==='pending').length, '건');
+      renderPending();
+    } catch(e) {
+      if (e.message === 'AUTH') throw e;   // loadAll이 처리
+      console.error('[Admin] 질문 로드 실패:', e);
+      document.getElementById('pendingList').innerHTML = '<div class="loading">불러오기 실패</div>';
+    }
+  }
+
+  function renderPending() {
+    const list = allQuestions.filter(q => q.status === 'pending');
+    const el   = document.getElementById('pendingList');
+    if (!list.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div>미답변 질문이 없습니다.</div></div>';
+      return;
+    }
+    el.innerHTML = list.map(q => `
+      <div class="q-card" id="card-${q.id}">
+        <div class="q-meta">
+          <span class="q-id">#${q.id}</span>
+          <span class="badge-pending">⏳ 대기 중</span>
+          <span class="q-date">${q.created_at}</span>
+          <button class="btn-del-q" onclick="deleteQuestion(${q.id})">삭제</button>
+        </div>
+        <div class="q-user">
+          질문자: <strong>${esc(q.name||'(미입력)')}</strong>
+          ${q.email ? `&nbsp;·&nbsp; <a href="mailto:${esc(q.email)}" style="color:var(--text-m)">${esc(q.email)}</a>` : ''}
+        </div>
+        <div class="q-text">Q. ${esc(q.question)}</div>
+        <div class="answer-form">
+          <label>카테고리</label>
+          <select class="cat-select" id="cat-${q.id}">
+            <option>연차/휴가</option><option>급여/계약</option><option>경조사</option>
+            <option>보험/복리후생</option><option>서류/증명</option><option>근무</option><option>기타</option>
+          </select>
+          <label>답변 내용</label>
+          <textarea id="ans-${q.id}" placeholder="답변을 입력하세요..."></textarea>
+          <button class="btn-submit" onclick="submitAnswer(${q.id})">답변 등록 → FAQ 추가</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function submitAnswer(id) {
+    const answer   = document.getElementById(`ans-${id}`).value.trim();
+    const category = document.getElementById(`cat-${id}`).value;
+    if (!answer) { showToast('답변 내용을 입력해주세요.','err'); return; }
+    const btn = document.querySelector(`#card-${id} .btn-submit`);
+    btn.disabled = true; btn.textContent = '등록 중...';
+    try {
+      const res  = await apiFetch('/admin/answer', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({id, answer, category}),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      showToast(`답변 등록 완료! (FAQ ${data.faq_count}개)`, 'ok');
+      loadAll();
+    } catch(e) {
+      if (e.message === 'AUTH') { showLogin(); return; }
+      showToast(`오류: ${e.message}`, 'err');
+      btn.disabled = false; btn.textContent = '답변 등록 → FAQ 추가';
+    }
+  }
+
+  async function deleteQuestion(id) {
+    if (!confirm('이 질문을 삭제하시겠습니까?')) return;
+    try {
+      const res = await apiFetch('/admin/delete_question', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({id}),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      showToast('삭제되었습니다.', 'ok');
+      document.getElementById(`card-${id}`)?.remove();
+      loadStats();
+    } catch(e) {
+      if (e.message === 'AUTH') { showLogin(); return; }
+      showToast(`오류: ${e.message}`, 'err');
+    }
+  }
+
+  // ── FAQ 관리 ───────────────────────────────────────────────
+  let faqItems = [];
+
+  async function loadFaq() {
+    try {
+      faqItems = await apiFetch('/admin/faq_items').then(r => r.json());
+      renderFaq();
+    } catch(e) {
+      if (e.message === 'AUTH') { showLogin(); return; }
+      document.getElementById('faqTableWrap').innerHTML = '<div class="loading">불러오기 실패</div>';
+    }
+  }
+
+  function renderFaq() {
+    const el = document.getElementById('faqTableWrap');
+    if (!faqItems.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>FAQ 항목이 없습니다.</div></div>';
+      return;
+    }
+    el.innerHTML = `
+      <div style="overflow-x:auto;">
+      <table class="faq-table">
+        <thead><tr>
+          <th class="tc" style="width:46px">번호</th>
+          <th style="width:120px">카테고리</th>
+          <th style="width:30%">질문</th>
+          <th>답변</th>
+          <th class="tc" style="width:96px">관리</th>
+        </tr></thead>
+        <tbody>
+          ${faqItems.map(item => `
+            <tr>
+              <td class="tc" style="color:var(--text-m)">${item.idx+1}</td>
+              <td><span class="cat-chip">${esc(item.cat)}</span></td>
+              <td class="q-cell">${esc(item.q)}</td>
+              <td class="a-cell" title="${esc(item.a)}">${esc(item.a.length>70 ? item.a.slice(0,70)+'…' : item.a)}</td>
+              <td class="tc">
+                <button class="btn-edit" onclick="openEditModal(${item.idx})">수정</button>
+                <button class="btn-del"  onclick="deleteFaq(${item.idx})">삭제</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      </div>`;
+  }
+
+  function openEditModal(idx) {
+    const item = faqItems[idx];
+    document.getElementById('editIdx').value  = idx;
+    document.getElementById('editCat').value  = item.cat;
+    document.getElementById('editQ').value    = item.q;
+    document.getElementById('editA').value    = item.a;
+    document.getElementById('editModal').style.display = 'flex';
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+  }
+
+  async function saveFaqEdit() {
+    const idx = parseInt(document.getElementById('editIdx').value);
+    const cat = document.getElementById('editCat').value;
+    const q   = document.getElementById('editQ').value.trim();
+    const a   = document.getElementById('editA').value.trim();
+    if (!q || !a) { showToast('질문과 답변을 입력해주세요.', 'err'); return; }
+    try {
+      const res  = await apiFetch('/admin/faq/update', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({idx, cat, q, a}),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      closeEditModal();
+      showToast('수정 완료!', 'ok');
+      loadFaq(); loadStats();
+    } catch(e) {
+      if (e.message === 'AUTH') { showLogin(); return; }
+      showToast(`오류: ${e.message}`, 'err');
+    }
+  }
+
+  async function deleteFaq(idx) {
+    if (!confirm('이 FAQ 항목을 삭제하시겠습니까?')) return;
+    try {
+      const res  = await apiFetch('/admin/faq/delete', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({idx}),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      showToast('삭제 완료!', 'ok');
+      loadFaq(); loadStats();
+    } catch(e) {
+      if (e.message === 'AUTH') { showLogin(); return; }
+      showToast(`오류: ${e.message}`, 'err');
+    }
+  }
+
+  async function addFaq() {
+    const cat = document.getElementById('newCat').value;
+    const q   = document.getElementById('newQ').value.trim();
+    const a   = document.getElementById('newA').value.trim();
+    if (!q || !a) { showToast('질문과 답변을 입력해주세요.', 'err'); return; }
+    try {
+      const res  = await apiFetch('/admin/faq/add', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({cat, q, a}),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      document.getElementById('newQ').value = '';
+      document.getElementById('newA').value = '';
+      showToast(`FAQ 추가 완료! (총 ${data.faq_count}개)`, 'ok');
+      loadFaq(); loadStats();
+    } catch(e) {
+      if (e.message === 'AUTH') { showLogin(); return; }
+      showToast(`오류: ${e.message}`, 'err');
+    }
+  }
+
+  // ── 답변 완료 ──────────────────────────────────────────────
+  async function loadAnswered() {
+    try {
+      const all      = await apiFetch('/admin/questions').then(r => r.json());
+      const answered = all.filter(q => q.status === 'answered');
+      const el       = document.getElementById('answeredList');
+      if (!answered.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>답변 완료 내역이 없습니다.</div></div>';
+        return;
+      }
+      el.innerHTML = answered.map(q => `
+        <div class="q-card answered">
+          <div class="q-meta">
+            <span class="q-id">#${q.id}</span>
+            <span class="badge-answered">✅ 답변 완료</span>
+            <span class="q-date">${q.created_at}</span>
+          </div>
+          <div class="q-user">
+            질문자: <strong>${esc(q.name||'(미입력)')}</strong>
+            ${q.email ? `&nbsp;·&nbsp; ${esc(q.email)}` : ''}
+          </div>
+          <div class="q-text">Q. ${esc(q.question)}</div>
+          <div class="answered-text">A. ${esc(q.answer||'')}</div>
+          <div style="font-size:11px;color:var(--text-m);margin-top:8px">답변일시: ${q.answered_at||''}</div>
+        </div>`).join('');
+    } catch(e) {
+      if (e.message === 'AUTH') { showLogin(); return; }
+      document.getElementById('answeredList').innerHTML = '<div class="loading">불러오기 실패</div>';
+    }
+  }
+
+  // ── 유틸 ──────────────────────────────────────────────────
+  function showToast(msg, type='ok') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = type; t.style.display = 'block';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.style.display = 'none'; }, 3500);
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
