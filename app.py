@@ -171,6 +171,13 @@ def build_index():
 
             col = _get_collection()
 
+            # 이미 인덱스가 있으면 건너뜀 (ingest.py가 선행 실행된 경우)
+            existing = col.get()
+            if existing["ids"]:
+                _index_ready = True
+                print(f"[RAG] 기존 인덱스 사용: {len(existing['ids'])}개 청크")
+                return
+
             # 기존 데이터 삭제 후 재구축
             existing = col.get()
             if existing["ids"]:
