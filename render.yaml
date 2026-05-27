@@ -2,7 +2,7 @@ services:
   - type: web
     name: eland-hr-faq
     env: python
-    buildCommand: pip install -r requirements.txt && python -c "from chromadb.utils.embedding_functions import DefaultEmbeddingFunction; DefaultEmbeddingFunction()"
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --workers=1 --timeout=120
     envVars:
       - key: ANTHROPIC_API_KEY

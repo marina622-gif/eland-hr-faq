@@ -1,6 +1,5 @@
 flask
 anthropic
-chromadb
 openpyxl
 python-dotenv
 gunicorn
