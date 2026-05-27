@@ -3,3 +3,4 @@ anthropic
 openpyxl
 python-dotenv
 gunicorn
+resend

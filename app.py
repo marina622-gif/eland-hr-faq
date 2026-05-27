@@ -8,11 +8,10 @@
 
 import os
 import sqlite3
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from functools import wraps
 from pathlib import Path
+
+import resend
 
 import anthropic
 import openpyxl
@@ -34,11 +33,9 @@ CAT_ORDER = ["연차/휴가", "급여/계약", "경조사", "보험/복리후생
 ANTHROPIC_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL   = "claude-haiku-4-5-20251001"
 
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
-SMTP_HOST   = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT   = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER   = os.getenv("EMAIL_USER", "")
-SMTP_PASS   = os.getenv("EMAIL_PASSWORD", "")
+ADMIN_EMAIL    = os.getenv("ADMIN_EMAIL", "")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+resend.api_key = RESEND_API_KEY
 
 SYSTEM_PROMPT = """\
 당신은 이랜드건설의 HR(인사) FAQ 챗봇입니다.
@@ -144,22 +141,16 @@ with get_db() as _c:
 
 # ── 이메일 ────────────────────────────────────────────────────
 def send_email(to: str, subject: str, body: str) -> bool:
-    print(f"[MAIL] 시도: to={to}, user={SMTP_USER!r}, pass_set={bool(SMTP_PASS)}, host={SMTP_HOST}:{SMTP_PORT}")
-    if not all([SMTP_USER, SMTP_PASS, to]):
-        print(f"[MAIL] 환경변수 누락 — 발송 스킵")
+    if not RESEND_API_KEY or not to:
+        print(f"[MAIL] API 키 또는 수신자 없음")
         return False
     try:
-        msg = MIMEMultipart()
-        msg["From"] = SMTP_USER
-        msg["To"]   = to
-        msg["Subject"] = subject
-        msg.attach(MIMEText(body, "plain", "utf-8"))
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
-            s.ehlo()
-            s.starttls()
-            s.ehlo()
-            s.login(SMTP_USER, SMTP_PASS)
-            s.send_message(msg)
+        resend.Emails.send({
+            "from": "이랜드건설 HR <onboarding@resend.dev>",
+            "to": [to],
+            "subject": subject,
+            "text": body,
+        })
         print(f"[MAIL] 성공 → {to}")
         return True
     except Exception as e:
@@ -442,11 +433,7 @@ def admin_faq_delete():
 @app.route("/admin/test-email")
 def admin_test_email():
     result = {
-        "smtp_host": SMTP_HOST,
-        "smtp_port": SMTP_PORT,
-        "email_user": SMTP_USER,
-        "email_user_set": bool(SMTP_USER),
-        "email_pass_set": bool(SMTP_PASS),
+        "resend_key_set": bool(RESEND_API_KEY),
         "admin_email": ADMIN_EMAIL,
     }
     ok = send_email(
