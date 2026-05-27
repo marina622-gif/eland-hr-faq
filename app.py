@@ -286,7 +286,24 @@ def reload_faq():
 
 # ── 앱 초기화 ─────────────────────────────────────────────────
 reload_faq()
-threading.Thread(target=build_index, daemon=True).start()  # 백그라운드 인덱싱
+
+# ingest.py가 선행 실행된 경우 ONNX 로딩 없이 즉시 ready 처리
+def _try_quick_ready():
+    global _index_ready
+    try:
+        _c = chromadb.PersistentClient(path=str(CHROMA_DIR))
+        _col = _c.get_collection(name="hr_docs")
+        cnt = _col.count()
+        if cnt > 0:
+            _index_ready = True
+            print(f"[RAG] 기존 인덱스 감지: {cnt}개 청크 — 즉시 ready")
+            return True
+    except Exception:
+        pass
+    return False
+
+if not _try_quick_ready():
+    threading.Thread(target=build_index, daemon=True).start()  # 백그라운드 인덱싱
 
 # ── SQLite ────────────────────────────────────────────────────
 def get_db():
