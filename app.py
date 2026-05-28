@@ -83,10 +83,16 @@ def reload_faq():
     global FAQ
     items = []
     items += _load_sheet(FAQ_FILE, SHEET, B_COL, Q_COL, A_COL, DATA_ROW)
-    items += _load_sheet(
-        BASE / "docs" / "이랜드건설_승진평가기준.xlsx",
-        "승진_FAQ_시드", 0, 1, 2, 2,
-    )
+    for xlsx_path in (BASE / "docs").glob("*.xlsx"):
+        if xlsx_path.name == FAQ_FILE.name:
+            continue
+        try:
+            wb = openpyxl.load_workbook(str(xlsx_path), data_only=True)
+            for sheet_name in wb.sheetnames:
+                if "FAQ" in sheet_name or "시드" in sheet_name:
+                    items += _load_sheet(xlsx_path, sheet_name, 0, 1, 2, 2)
+        except Exception as e:
+            print(f"[ERROR] {xlsx_path.name}: {e}")
     FAQ = items
     print(f"[FAQ] {len(FAQ)}개 항목 로드")
 
