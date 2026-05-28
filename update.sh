@@ -10,24 +10,17 @@ echo "======================================"
 echo "  이랜드건설 HR FAQ 업데이트 스크립트"
 echo "======================================"
 
-# 1. 추가/삭제된 파일 감지
+# 1. docs 변경사항 확인
 echo ""
-echo "→ [1/3] docs 변경사항 감지 중..."
-ADDED=$(git diff --name-only HEAD -- docs/ 2>/dev/null; git ls-files --others --exclude-standard docs/)
-DELETED=$(git diff --name-only --diff-filter=D HEAD -- docs/ 2>/dev/null)
-
-if [ -n "$ADDED" ]; then
-    echo "  추가된 파일:"
-    echo "$ADDED" | sed 's/^/    + /'
-fi
-if [ -n "$DELETED" ]; then
-    echo "  삭제된 파일:"
-    echo "$DELETED" | sed 's/^/    - /'
-fi
-if [ -z "$ADDED" ] && [ -z "$DELETED" ]; then
+echo "→ [1/3] docs 변경사항 확인 중..."
+git add docs/
+if git diff --cached --quiet -- docs/; then
     echo "  변경된 파일 없음. 종료합니다."
+    git restore --staged docs/ 2>/dev/null || true
     exit 0
 fi
+git diff --cached --name-status -- docs/
+git restore --staged docs/ 2>/dev/null || true
 
 # 2. 새 파일에 대해 FAQ 시드 자동 생성
 echo ""
