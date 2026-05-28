@@ -84,7 +84,7 @@ def reload_faq():
     items = []
     items += _load_sheet(FAQ_FILE, SHEET, B_COL, Q_COL, A_COL, DATA_ROW)
     for xlsx_path in (BASE / "docs").glob("*.xlsx"):
-        if xlsx_path.name == FAQ_FILE.name:
+        if xlsx_path.name.startswith("~$") or xlsx_path.name == FAQ_FILE.name:
             continue
         try:
             wb = openpyxl.load_workbook(str(xlsx_path), data_only=True)
