@@ -3,6 +3,7 @@
 
 # 엑셀 임시 파일
 ~$*.xlsx
+*.tmp
 
 # ChromaDB 벡터 인덱스 (로컬 빌드)
 chroma_db/

@@ -7,8 +7,11 @@
 """
 
 import os
+import shutil
 import sqlite3
 import smtplib
+import tempfile
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
@@ -54,6 +57,35 @@ SYSTEM_PROMPT = """\
 
 # ── FAQ 메모리 로드 ───────────────────────────────────────────
 FAQ: list = []
+
+
+def _save_wb(wb, path: Path):
+    """임시파일에 저장 후 원본 교체 — 파일이 열려있어도 안전하게 저장."""
+    tmp = path.with_suffix('.tmp')
+    for attempt in range(3):
+        try:
+            wb.save(str(tmp))
+            try:
+                os.replace(str(tmp), str(path))
+            except PermissionError:
+                shutil.copy2(str(tmp), str(path))
+            return
+        except PermissionError:
+            if attempt < 2:
+                time.sleep(0.5)
+            else:
+                if tmp.exists():
+                    try:
+                        tmp.unlink()
+                    except Exception:
+                        pass
+                raise PermissionError("파일 저장 실패: Excel을 닫고 다시 시도해주세요.")
+        finally:
+            if tmp.exists():
+                try:
+                    tmp.unlink()
+                except Exception:
+                    pass
 
 
 def _load_sheet(filepath, sheet_name, cat_col, q_col, a_col, data_row=2):
@@ -368,7 +400,7 @@ def admin_answer():
         wb = openpyxl.load_workbook(str(FAQ_FILE))
         ws = wb[SHEET]
         ws.append([ws.max_row - DATA_ROW + 1, category, question, answer])
-        wb.save(str(FAQ_FILE))
+        _save_wb(wb, FAQ_FILE)
         reload_faq()
     except Exception as e:
         return jsonify({"error": f"Excel 저장 실패: {e}"}), 500
@@ -418,7 +450,7 @@ def admin_faq_add():
         wb = openpyxl.load_workbook(str(FAQ_FILE))
         ws = wb[SHEET]
         ws.append([ws.max_row - DATA_ROW + 1, cat, q, a])
-        wb.save(str(FAQ_FILE))
+        _save_wb(wb, FAQ_FILE)
         reload_faq()
         return jsonify({"ok": True, "faq_count": len(FAQ)})
     except Exception as e:
@@ -444,7 +476,7 @@ def admin_faq_update():
         rows[idx][B_COL].value = cat
         rows[idx][Q_COL].value = q
         rows[idx][A_COL].value = a
-        wb.save(str(FAQ_FILE))
+        _save_wb(wb, FAQ_FILE)
         reload_faq()
         return jsonify({"ok": True, "faq_count": len(FAQ)})
     except Exception as e:
@@ -462,7 +494,7 @@ def admin_faq_delete():
         wb = openpyxl.load_workbook(str(FAQ_FILE))
         ws = wb[SHEET]
         ws.delete_rows(idx + DATA_ROW + 1)
-        wb.save(str(FAQ_FILE))
+        _save_wb(wb, FAQ_FILE)
         reload_faq()
         return jsonify({"ok": True, "faq_count": len(FAQ)})
     except Exception as e:
