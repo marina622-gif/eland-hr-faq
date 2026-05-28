@@ -1,6 +1,9 @@
 # 환경변수 (API 키, 비밀번호)
 .env
 
+# 엑셀 임시 파일
+~$*.xlsx
+
 # ChromaDB 벡터 인덱스 (로컬 빌드)
 chroma_db/
 
