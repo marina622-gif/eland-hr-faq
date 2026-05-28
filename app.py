@@ -29,7 +29,7 @@ SHEET      = "FAQ"
 B_COL, Q_COL, A_COL = 1, 2, 3
 DATA_ROW   = 2
 
-CAT_ORDER = ["연차/휴가", "급여/계약", "경조사", "보험/복리후생", "서류/증명", "근무"]
+CAT_ORDER = ["연차/휴가", "급여/계약", "경조사", "보험/복리후생", "서류/증명", "근무", "평가/승진"]
 
 ANTHROPIC_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL   = "claude-haiku-4-5-20251001"
@@ -56,28 +56,39 @@ SYSTEM_PROMPT = """\
 FAQ: list = []
 
 
-def reload_faq():
-    global FAQ
-    if not FAQ_FILE.exists():
-        FAQ = []
-        return
+def _load_sheet(filepath, sheet_name, cat_col, q_col, a_col, data_row=2):
+    if not filepath.exists():
+        return []
     try:
-        wb = openpyxl.load_workbook(str(FAQ_FILE), data_only=True)
-        ws = wb[SHEET]
+        wb = openpyxl.load_workbook(str(filepath), data_only=True)
+        if sheet_name not in wb.sheetnames:
+            return []
+        ws = wb[sheet_name]
         items = []
-        for row in list(ws.iter_rows(values_only=True))[DATA_ROW:]:
-            if len(row) <= max(Q_COL, A_COL):
+        for row in list(ws.iter_rows(values_only=True))[data_row:]:
+            if len(row) <= max(cat_col, q_col, a_col):
                 continue
-            cat = str(row[B_COL]).strip() if row[B_COL] else "기타"
-            q   = str(row[Q_COL]).strip() if row[Q_COL] else ""
-            a   = str(row[A_COL]).strip() if row[A_COL] else ""
+            cat = str(row[cat_col]).strip() if row[cat_col] else "기타"
+            q   = str(row[q_col]).strip()   if row[q_col]   else ""
+            a   = str(row[a_col]).strip()   if row[a_col]   else ""
             if q and a and cat not in ("카테고리", "None"):
                 items.append({"cat": cat, "q": q, "a": a})
-        FAQ = items
-        print(f"[FAQ] {len(FAQ)}개 항목 로드")
+        return items
     except Exception as e:
-        print(f"[ERROR] FAQ 로드 실패: {e}")
-        FAQ = []
+        print(f"[ERROR] {filepath.name} 로드 실패: {e}")
+        return []
+
+
+def reload_faq():
+    global FAQ
+    items = []
+    items += _load_sheet(FAQ_FILE, SHEET, B_COL, Q_COL, A_COL, DATA_ROW)
+    items += _load_sheet(
+        BASE / "docs" / "이랜드건설_승진평가기준.xlsx",
+        "승진_FAQ_시드", 0, 1, 2, 2,
+    )
+    FAQ = items
+    print(f"[FAQ] {len(FAQ)}개 항목 로드")
 
 
 def _faq_context() -> str:
