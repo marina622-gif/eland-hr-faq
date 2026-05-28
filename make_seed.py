@@ -104,6 +104,7 @@ def process_file(xlsx_path: Path, client: anthropic.Anthropic):
     if seed_name in wb.sheetnames:
         del wb[seed_name]
     ws_seed = wb.create_sheet(seed_name)
+    ws_seed.append([f"{xlsx_path.stem} FAQ 시드 (자동 생성)"])
     ws_seed.append(["카테고리", "질문", "답변"])
     for item in items:
         ws_seed.append([item["cat"], item["q"], item["a"]])
@@ -120,7 +121,7 @@ def main():
     client = anthropic.Anthropic(api_key=API_KEY)
     xlsx_files = [
         p for p in DOCS_DIR.glob("*.xlsx")
-        if p.name != MAIN_FAQ
+        if p.name != MAIN_FAQ and not p.name.startswith("~$")
     ]
 
     if not xlsx_files:
